@@ -1,0 +1,510 @@
+####Enrichment_dotplot2_subsettedBeforeProcessing.R
+
+library(ggplot2)
+library(dplyr)
+
+
+pathResults1 <- ("C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\Enrichment\\")
+
+
+pathResults2 <- ("C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\results\\vsnNorm\\outlierRM2\\ALDH1L1+ outlier removal after filter\\Enrichment\\")
+
+
+pathResults3 <- ("C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\Enrichment\\")
+
+
+# GFAP
+GFAP_enriched_pathways <- read.delim(paste0(pathResults1, "GFAP_enrichment.all.tsv"))
+GFAP_enriched_pathways$GeneRatio <- GFAP_enriched_pathways$observed.gene.count / GFAP_enriched_pathways$background.gene.count
+
+new_order <- c(1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10)
+
+GFAP_enriched_pathways <- GFAP_enriched_pathways[, new_order]
+write.csv(GFAP_enriched_pathways, paste0(pathResults1, "GFAP_all_enriched_pathways.csv"), row.names = FALSE)
+df1 <- GFAP_enriched_pathways
+
+
+# ALDH1L1
+ALDH1L1_enriched_pathways <- read.delim(paste0(pathResults2, "ALDH1L1_enrichment.all.tsv"))
+ALDH1L1_enriched_pathways$GeneRatio <- ALDH1L1_enriched_pathways$observed.gene.count / ALDH1L1_enriched_pathways$background.gene.count
+
+new_order <- c(1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10)
+
+ALDH1L1_enriched_pathways <- ALDH1L1_enriched_pathways[, new_order]
+write.csv(ALDH1L1_enriched_pathways, paste0(pathResults2, "ALDH1L1_all_enriched_pathways.csv"), row.names = FALSE)
+df2 <- ALDH1L1_enriched_pathways
+
+
+#BOTH
+Both_enriched_pathways <- read.delim(paste0(pathResults3, "Both_enrichment.all.tsv"))
+Both_enriched_pathways$GeneRatio <- Both_enriched_pathways$observed.gene.count / Both_enriched_pathways$background.gene.count
+
+new_order <- c(1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10)
+
+Both_enriched_pathways <- Both_enriched_pathways[, new_order]
+write.csv(Both_enriched_pathways, paste0(pathResults3, "Both_all_enriched_pathways.csv"), row.names = FALSE)
+df3 <- Both_enriched_pathways
+
+
+#Unique pathways GFAP: 
+unique_GFAP <- setdiff(df1$term.description,
+                       union(df2$term.description, df3$term.description))
+
+unique_ALDH1L1 <- setdiff(df2$term.description,
+                          union(df1$term.description, df3$term.description))
+
+unique_Both <- setdiff(df3$term.description,
+                       union(df1$term.description, df2$term.description))
+
+# GFAP selected pathways 
+GFAP_selected_pathways <- c("Fibrinogen complex", "Hemostasis, and Dissolution of Fibrin Clot", "Regulation of TLR by endogenous ligand",
+                            "Platelet Aggregation (Plug Formation)", "Common Pathway of Fibrin Clot Formation", 
+                            "GRB2:SOS provides linkage to MAPK signaling for Integrins", "p130Cas linkage to MAPK signaling for integrins",
+                            "MyD88 deficiency (TLR2/4)", "Toll-like Receptor Cascades", "Blood clotting cascade", "Platelet activation",
+                            "Fibrin complement receptor 3 signaling pathway", "MyD88:MAL(TIRAP) cascade initiated on plasma membrane", "VEGFA-VEGFR2 signaling")
+
+
+# ALDH1L1 selected pathways 
+ALDH1L1_selected_pathways <-  c("S100/CaBP-9k-type, calcium binding, subdomain, and Annexin", "Mixed, incl. S100/CaBP-9k-type, calcium binding, subdomain, and Cystatin superfamily", 
+                                "Proteinase inhibitor I25, cystatin, conserved site, and Endolysosome lumen",
+                                "Sulfuric ester hydrolase activity, and Other glycan degradation",
+                                "Positive regulation of plasma membrane repair, and EF hand",
+                                "Neutrophil degranulation",
+                                "Apoptotic cleavage of cell adhesion  proteins",
+                                "Dissolution of Fibrin Clot",
+                                "SUMOylation of DNA damage response and repair proteins",
+                                "Apoptotic cleavage of cellular proteins",
+                                "Interferon Signaling",
+                                "Adherens junctions interactions",
+                                "AnxA2-p11 complex", "Disorders of transmembrane transporters")
+
+
+# Both selected pathways
+# FIX 1: "Protein-containing complex organization" tekrarı kaldırıldı
+Both_selected_pathways <- c("Chromatin remodelling", "mRNA processing", "mRNA splicing","RNA splicing", "Synaptic signaling", "Gene expression", "Nucleobase-containing compound metabolic process",
+                            "Regulation of RNA processing", "Positive regulation of histone modification",  "Ribonucleoprotein complex biogenesis", "Protein-containing complex organization",
+                            "RNA polymerase transcription initiation", "Ribonucleoprotein complex assembly", "Regulation of mRNA processing",
+                            "RNA metabolic process", "miRNA processing", "Neurotransmitter transport", "Neurotransmitter secretion",
+                            "Platelet activation", "Voltage-gated ion channel activity", "cellular response to zinc ion",
+                            "Spliceosome",  "Structural constituent of cytoskeleton", "RNA processing")
+
+
+
+#Plot GFAP_selected_pathways 
+selected_pathways <- GFAP_selected_pathways
+
+
+# Filter the dataframe for only the selected pathways
+filtered_df <- df1[df1$term.description %in% selected_pathways, ]
+
+# Order the pathways by GeneRatio before plotting.
+filtered_df <- filtered_df %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+
+# Create the dotplot
+ggplot(filtered_df, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "Pathway Analysis",
+       x = "Protein Ratio",
+       y = "Pathway",
+       color = "False Discovery Rate",
+       size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+ggsave(paste0(pathResults1, "Enrichment_GFAP_astros_selected2.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults1, "Enrichment_GFAP_astros_selected2.png"), height = 10, width =13, bg="white")
+
+
+
+##Plot the ALDH1L1 selected pathways
+
+selected_pathways <- ALDH1L1_selected_pathways
+
+# FIX 2: Yorum satırındaki df1 → df2 olarak düzeltildi
+# Filter the dataframe for only the selected pathways
+filtered_df <- df2[df2$term.description %in% selected_pathways, ]
+
+#### FDR < 0.05 olan tüm pathway'leri otomatik seç
+# filtered_df <- df2[df2$false.discovery.rate < 0.05, ]  # df2 kullanılmalı (df1 değil)
+
+# Order the pathways by GeneRatio before plotting.
+filtered_df <- filtered_df %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+
+# Create the dotplot
+ggplot(filtered_df, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "Pathway Analysis",
+       x = "Protein Ratio",
+       y = "Pathway",
+       color = "False Discovery Rate",
+       size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+ggsave(paste0(pathResults2, "Enrichment_ALDH1L1_astros_selected2.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults2, "Enrichment_ALDH1L1_astros_selected2.png"), height = 9, width =13, bg="white")
+
+
+
+#Plot Both_selected_pathways 
+selected_pathways <- Both_selected_pathways
+
+
+# Filter the dataframe for only the selected pathways
+filtered_df <- df3[df3$term.description %in% selected_pathways, ]
+
+# Order the pathways by GeneRatio before plotting.
+filtered_df <- filtered_df %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+
+# Create the dotplot
+ggplot(filtered_df, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "Pathway Analysis",
+       x = "Protein Ratio",
+       y = "Pathway",
+       color = "False Discovery Rate",
+       size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+ggsave(paste0(pathResults3, "Enrichment_Both_astros_selected2.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults3, "Enrichment_Both_astros_selected2.png"), height = 10, width =13, bg="white")
+
+
+# ─── GFAP: UNIQUE PATHWAYS PLOT ───
+filtered_df_unique_GFAP <- df1[df1$term.description %in% unique_GFAP & 
+                                 df1$false.discovery.rate < 0.05, ]
+
+filtered_df_unique_GFAP <- filtered_df_unique_GFAP %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+ggplot(filtered_df_unique_GFAP, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "GFAP Unique Pathways",
+       x = "Gene Ratio", y = "Pathway",
+       color = "FDR", size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14))
+ggsave(paste0(pathResults1, "Enrichment_GFAP_unique_pathways.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults1, "Enrichment_GFAP_unique_pathways.png"), height = 10, width = 13, bg = "white")
+
+
+# ─── ALDH1L1: UNIQUE PATHWAYS PLOT ───
+filtered_df_unique_ALDH1L1 <- df2[df2$term.description %in% unique_ALDH1L1 & 
+                                    df2$false.discovery.rate < 0.000001, ]
+
+filtered_df_unique_ALDH1L1 <- filtered_df_unique_ALDH1L1 %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+ggplot(filtered_df_unique_ALDH1L1, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "ALDH1L1 Unique Pathways",
+       x = "Gene Ratio", y = "Pathway",
+       color = "FDR", size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14))
+ggsave(paste0(pathResults2, "Enrichment_ALDH1L1_unique_pathways.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults2, "Enrichment_ALDH1L1_unique_pathways.png"), height = 10, width = 13, bg = "white")
+
+
+# ─── BOTH: UNIQUE PATHWAYS PLOT ───
+filtered_df_unique_Both <- df3[df3$term.description %in% unique_Both & 
+                                 df3$false.discovery.rate < 0.000001, ]
+
+filtered_df_unique_Both <- filtered_df_unique_Both %>%
+  group_by(term.description) %>%
+  summarize(GeneRatio = mean(GeneRatio),
+            false.discovery.rate = dplyr::first(false.discovery.rate),
+            observed.gene.count = dplyr::first(observed.gene.count)) %>%
+  ungroup() %>%
+  arrange(GeneRatio) %>%
+  mutate(term.description = factor(term.description, levels = unique(term.description)))
+
+ggplot(filtered_df_unique_Both, aes(x = GeneRatio, y = term.description)) +
+  geom_point(aes(size = observed.gene.count, color = false.discovery.rate)) +
+  scale_color_gradient(low = "blue", high = "red") +
+  theme_minimal() +
+  labs(title = "Both Unique Pathways",
+       x = "Gene Ratio", y = "Pathway",
+       color = "FDR", size = "Observed Protein Count") +
+  theme(axis.text.y = element_text(size = 14),
+        axis.text.x = element_text(size = 14))
+ggsave(paste0(pathResults3, "Enrichment_Both_unique_pathways.pdf"), height = 9, width = 12)
+ggsave(paste0(pathResults3, "Enrichment_Both_unique_pathways.png"), height = 10, width = 13, bg = "white")
+
+
+############common and unique protein number GFAP+ and ALDH1L1+
+
+library(ggplot2)
+library(VennDiagram)
+
+path <- "C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\"
+pathResults_GFAP <- file.path(path, "results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\")
+pathResults_ALDH1L1 <- file.path(path, "results\\vsnNorm\\outlierRM2\\ALDH1L1+ outlier removal after filter\\")
+pathResults_comparison <- file.path(path, "results\\vsnNorm\\outlierRM2\\Outlier_detection_after_filter\\")
+dir.create(pathResults_comparison, recursive = TRUE, showWarnings = FALSE)
+
+# DEP sonuçlarını oku
+GFAP_res <- read.csv(paste0(pathResults_GFAP, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+ALDH1L1_res <- read.csv(paste0(pathResults_ALDH1L1, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+
+# Protein listelerini al
+GFAP_proteins <- unique(GFAP_res$Gene)
+ALDH1L1_proteins <- unique(ALDH1L1_res$Gene)
+
+# Ortak ve unique proteinleri bul
+common_proteins <- intersect(GFAP_proteins, ALDH1L1_proteins)
+unique_GFAP_proteins <- setdiff(GFAP_proteins, ALDH1L1_proteins)
+unique_ALDH1L1_proteins <- setdiff(ALDH1L1_proteins, GFAP_proteins)
+
+# Sayıları yazdır
+cat("GFAP MS toplam DEP sayisi:", length(GFAP_proteins), "\n")
+cat("ALDH1L1 MS toplam DEP sayisi:", length(ALDH1L1_proteins), "\n")
+cat("Ortak protein sayisi:", length(common_proteins), "\n")
+cat("Sadece GFAP MS'e unique protein sayisi:", length(unique_GFAP_proteins), "\n")
+cat("Sadece ALDH1L1 MS'e unique protein sayisi:", length(unique_ALDH1L1_proteins), "\n")
+
+# FIX 3: Dosya isimleri pairwise karşılaştırmayı yansıtacak şekilde güncellendi
+write.csv(data.frame(Gene = common_proteins), paste0(pathResults_comparison, "common_GFAP_ALDH1L1_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_GFAP_proteins), paste0(pathResults_comparison, "unique_GFAP_vs_ALDH1L1_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_ALDH1L1_proteins), paste0(pathResults_comparison, "unique_ALDH1L1_vs_GFAP_MS_proteins.csv"), row.names = FALSE)
+
+# Venn diagram
+venn.plot <- draw.pairwise.venn(
+  area1 = length(GFAP_proteins),
+  area2 = length(ALDH1L1_proteins),
+  cross.area = length(common_proteins),
+  category = c("GFAP MS", "ALDH1L1 MS"),
+  fill = c("#D22B2B", "#0096FF"),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5,
+  cat.pos = c(-20, 20)
+)
+
+png(paste0(pathResults_comparison, "Venn_GFAP_vs_ALDH1L1_MS_proteins.png"), width = 8, height = 6, units = "in", res = 300)
+grid.draw(venn.plot)
+dev.off()
+
+
+############common and unique protein number GFAP+ and Both 
+
+library(ggplot2)
+library(VennDiagram)
+
+path <- "C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\"
+pathResults_GFAP <- file.path(path, "results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\")
+pathResults_Both <- file.path(path, "results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\")
+pathResults_comparison <- file.path(path, "results\\vsnNorm\\outlierRM2\\Outlier_detection_after_filter\\")
+dir.create(pathResults_comparison, recursive = TRUE, showWarnings = FALSE)
+
+# DEP sonuçlarını oku
+GFAP_res <- read.csv(paste0(pathResults_GFAP, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+Both_res <- read.csv(paste0(pathResults_Both, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+
+# Protein listelerini al
+GFAP_proteins <- unique(GFAP_res$Gene)
+Both_proteins <- unique(Both_res$Gene)
+
+# Ortak ve unique proteinleri bul
+common_proteins <- intersect(GFAP_proteins, Both_proteins)
+unique_GFAP_proteins <- setdiff(GFAP_proteins, Both_proteins)
+unique_Both_proteins <- setdiff(Both_proteins, GFAP_proteins)
+
+# Sayıları yazdır
+cat("GFAP MS toplam DEP sayisi:", length(GFAP_proteins), "\n")
+cat("Both MS toplam DEP sayisi:", length(Both_proteins), "\n")
+cat("Ortak protein sayisi:", length(common_proteins), "\n")
+cat("Sadece GFAP MS'e unique protein sayisi:", length(unique_GFAP_proteins), "\n")
+cat("Sadece Both MS'e unique protein sayisi:", length(unique_Both_proteins), "\n")
+
+# FIX 3: Dosya isimleri pairwise karşılaştırmayı yansıtacak şekilde güncellendi
+write.csv(data.frame(Gene = common_proteins), paste0(pathResults_comparison, "common_GFAP_Both_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_GFAP_proteins), paste0(pathResults_comparison, "unique_GFAP_vs_Both_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_Both_proteins), paste0(pathResults_comparison, "unique_Both_vs_GFAP_MS_proteins.csv"), row.names = FALSE)
+
+# Venn diagram
+venn.plot <- draw.pairwise.venn(
+  area1 = length(GFAP_proteins),
+  area2 = length(Both_proteins),
+  cross.area = length(common_proteins),
+  category = c("GFAP MS", "Both MS"),
+  fill = c("#D22B2B", "#0096FF"),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5,
+  cat.pos = c(-20, 20)
+)
+
+png(paste0(pathResults_comparison, "Venn_GFAP_vs_Both_MS_proteins.png"), width = 8, height = 6, units = "in", res = 300)
+grid.draw(venn.plot)
+dev.off()
+
+
+############common and unique protein number ALDH1L1+ and Both
+
+library(ggplot2)
+library(VennDiagram)
+
+path <- "C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\"
+pathResults_Both <- file.path(path, "results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\")
+pathResults_ALDH1L1 <- file.path(path, "results\\vsnNorm\\outlierRM2\\ALDH1L1+ outlier removal after filter\\")
+pathResults_comparison <- file.path(path, "results\\vsnNorm\\outlierRM2\\Outlier_detection_after_filter\\")
+dir.create(pathResults_comparison, recursive = TRUE, showWarnings = FALSE)
+
+# DEP sonuçlarını oku
+Both_res <- read.csv(paste0(pathResults_Both, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+ALDH1L1_res <- read.csv(paste0(pathResults_ALDH1L1, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+
+# Protein listelerini al
+Both_proteins <- unique(Both_res$Gene)
+ALDH1L1_proteins <- unique(ALDH1L1_res$Gene)
+
+# Ortak ve unique proteinleri bul
+common_proteins <- intersect(Both_proteins, ALDH1L1_proteins)
+unique_Both_proteins <- setdiff(Both_proteins, ALDH1L1_proteins)
+unique_ALDH1L1_proteins <- setdiff(ALDH1L1_proteins, Both_proteins)
+
+# Sayıları yazdır
+cat("Both MS toplam DEP sayisi:", length(Both_proteins), "\n")
+cat("ALDH1L1 MS toplam DEP sayisi:", length(ALDH1L1_proteins), "\n")
+cat("Ortak protein sayisi:", length(common_proteins), "\n")
+cat("Sadece Both MS'e unique protein sayisi:", length(unique_Both_proteins), "\n")
+cat("Sadece ALDH1L1 MS'e unique protein sayisi:", length(unique_ALDH1L1_proteins), "\n")
+
+# FIX 3: Dosya isimleri pairwise karşılaştırmayı yansıtacak şekilde güncellendi
+write.csv(data.frame(Gene = common_proteins), paste0(pathResults_comparison, "common_Both_ALDH1L1_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_Both_proteins), paste0(pathResults_comparison, "unique_Both_vs_ALDH1L1_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_ALDH1L1_proteins), paste0(pathResults_comparison, "unique_ALDH1L1_vs_Both_MS_proteins.csv"), row.names = FALSE)
+
+# Venn diagram
+venn.plot <- draw.pairwise.venn(
+  area1 = length(Both_proteins),
+  area2 = length(ALDH1L1_proteins),
+  cross.area = length(common_proteins),
+  category = c("Both MS", "ALDH1L1 MS"),
+  fill = c("#D22B2B", "#0096FF"),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5,
+  cat.pos = c(-20, 20)
+)
+
+png(paste0(pathResults_comparison, "Venn_Both_vs_ALDH1L1_MS_proteins.png"), width = 8, height = 6, units = "in", res = 300)
+grid.draw(venn.plot)
+dev.off()
+
+
+##########COMMON DEP AMONG 3 GROUPS
+
+library(ggplot2)
+library(VennDiagram)
+library(grid) 
+
+path <- "C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\"
+pathResults_GFAP <- file.path(path, "results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\")
+pathResults_ALDH1L1 <- file.path(path, "results\\vsnNorm\\outlierRM2\\ALDH1L1+ outlier removal after filter\\")
+pathResults_Both <- file.path(path, "results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\")
+pathResults_comparison <- file.path(path, "results\\vsnNorm\\outlierRM2\\Outlier_detection_after_filter\\")
+dir.create(pathResults_comparison, recursive = TRUE, showWarnings = FALSE)
+
+# DEP sonuçlarını oku
+GFAP_res <- read.csv(paste0(pathResults_GFAP, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+ALDH1L1_res <- read.csv(paste0(pathResults_ALDH1L1, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+Both_res <- read.csv(paste0(pathResults_Both, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))
+
+# Protein listelerini al
+GFAP_proteins <- unique(GFAP_res$Gene)
+ALDH1L1_proteins <- unique(ALDH1L1_res$Gene)
+Both_proteins <- unique(Both_res$Gene)
+
+# Ortak ve unique proteinleri bul
+common_proteins <- Reduce(intersect, list(GFAP_proteins, ALDH1L1_proteins, Both_proteins))
+
+unique_GFAP_proteins <- setdiff(GFAP_proteins, union(ALDH1L1_proteins, Both_proteins))
+unique_ALDH1L1_proteins <- setdiff(ALDH1L1_proteins, union(GFAP_proteins, Both_proteins))
+unique_Both_proteins <- setdiff(Both_proteins, union(GFAP_proteins, ALDH1L1_proteins))
+
+# Sayıları yazdır
+cat("GFAP MS toplam DEP sayisi:", length(GFAP_proteins), "\n")
+cat("ALDH1L1 MS toplam DEP sayisi:", length(ALDH1L1_proteins), "\n")
+cat("Both MS toplam DEP sayisi:", length(Both_proteins), "\n")
+cat("Ortak protein sayisi:", length(common_proteins), "\n")
+cat("Sadece GFAP MS'e unique protein sayisi:", length(unique_GFAP_proteins), "\n")
+cat("Sadece ALDH1L1 MS'e unique protein sayisi:", length(unique_ALDH1L1_proteins), "\n")
+cat("Sadece Both MS'e unique protein sayisi:", length(unique_Both_proteins), "\n")
+
+# Kaydet (3'lü karşılaştırma — dosya isimleri zaten netti, değiştirilmedi)
+write.csv(data.frame(Gene = common_proteins), paste0(pathResults_comparison, "common_GFAP_ALDH1L1_Both_MS_proteins.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_GFAP_proteins), paste0(pathResults_comparison, "unique_GFAP_MS_proteins_among_3_groups.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_ALDH1L1_proteins), paste0(pathResults_comparison, "unique_ALDH1L1_MS_proteins_among_3_groups.csv"), row.names = FALSE)
+write.csv(data.frame(Gene = unique_Both_proteins), paste0(pathResults_comparison, "unique_Both_MS_proteins_among_3_groups.csv"), row.names = FALSE)
+
+# Venn diagram
+venn.plot <- draw.triple.venn(
+  area1 = length(GFAP_proteins),
+  area2 = length(ALDH1L1_proteins),
+  area3 = length(Both_proteins),
+  n12 = length(intersect(GFAP_proteins, ALDH1L1_proteins)),
+  n23 = length(intersect(ALDH1L1_proteins, Both_proteins)),
+  n13 = length(intersect(GFAP_proteins, Both_proteins)),
+  n123 = length(common_proteins),
+  category = c("GFAP MS", "ALDH1L1 MS", "Both MS"),
+  fill = c("#E8A0A0", "#A6C8FF", "#9ED9B6"),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5
+)
+
+png(paste0(pathResults_comparison, "Venn_GFAP_vs_ALDH1L1_vs_Both_MS_proteins.png"), width = 8, height = 6, units = "in", res = 300)
+grid.draw(venn.plot)
+dev.off()
