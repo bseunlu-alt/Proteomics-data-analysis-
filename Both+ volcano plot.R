@@ -83,7 +83,7 @@ check_split_consistency <- function(res_df, max_splits, label = "res") {
 # PATHS
 
 path        <- "C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\"
-pathResults <- file.path(path, "results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\")
+pathResults <- file.path(path, "results\\vsnNorm\\outlierRM2\\Both+ outlier removal after filter\\figures\\")
 dir.create(pathResults, recursive = TRUE, showWarnings = FALSE)
 message("Output directory: ", pathResults)
 
