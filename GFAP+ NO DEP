@@ -6,7 +6,7 @@ set.seed(42)
 library(ggplot2)
 
 pathResults1 <- file.path(path, "results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\")
-pathResults2 <- ("C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\figures")
+pathResults2 <- ("C:\\Users\\bseun\\OneDrive - Nexus365\\Desktop\\PROTEOMICS TUM DOSYALAR\\astrocytes perseus\\results\\vsnNorm\\outlierRM2\\GFAP+ outlier removal after filter\\figures\\")
 
 
 GFAP_res <- read.csv(paste0(pathResults1, "sig_res_EBayes_adjusted_MS_vs_Ctrl_strict.csv"))  
